@@ -1,3 +1,6 @@
+# Ignore macOS files
+.DS_Store
+
 # Ignore dependencies
 from_others/
 
