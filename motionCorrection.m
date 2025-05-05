@@ -66,5 +66,9 @@ for i = 1:size(files, 1)
 end
 
 % Save options and final template
+[~, filename1, ~] = fileparts(files(1).name);
+[~, filename2, ~] = fileparts(files(end).name);
+
+filename = [filename1 '_' filename2(end-4:end)];
 optionsPath = fullfile(saveFolder, [filename '.mat']);
 save(optionsPath, 'template', 'options');
