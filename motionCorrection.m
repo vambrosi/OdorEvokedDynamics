@@ -1,3 +1,7 @@
+% MOTIONCORRECTION Apply motion correction to all tiff stacks in a folder.
+% Uses the NoRMCorre non-linear algorithm with default settings. Saves the
+% resulting motion corrected stacks in a separate folder.
+
 %% User Input (folder with images to motion correct)
 
 experimentFolder = '../OdorEvokedDynamicsData/20250321/Experiment1';
@@ -45,6 +49,12 @@ options = NoRMCorreSetParms( ...
 % Run motion correction of file using template of the last file
 % See github.com/flatironinstitute/NoRMCorre/issues/12 for details.
 
+% File path where current state will be saved 
+[~, filename1, ~] = fileparts(files(1).name);
+[~, filename2, ~] = fileparts(files(end).name);
+stateFilename = [filename1 '_' filename2(end-4:end)];
+statePath = fullfile(saveFolder, [stateFilename '.mat']);
+
 template = [];
 for i = 1:size(files, 1)
     fprintf('=======================================================\n');
@@ -63,12 +73,10 @@ for i = 1:size(files, 1)
     [~, ~, template, options] = ...
         normcorre_batch(filePath, options, template);
     toc
+
+    % Save current state in case loop is interrupted
+    % - filename tells where the loop stopped
+    % - template is needed to keep motion correction consistent
+    % - options stores the initial settings
+    save(statePath, 'filename', 'template', 'options');
 end
-
-% Save options and final template
-[~, filename1, ~] = fileparts(files(1).name);
-[~, filename2, ~] = fileparts(files(end).name);
-
-filename = [filename1 '_' filename2(end-4:end)];
-optionsPath = fullfile(saveFolder, [filename '.mat']);
-save(optionsPath, 'template', 'options');
