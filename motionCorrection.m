@@ -7,8 +7,8 @@
 experimentFolder = '../OdorEvokedDynamicsData/20250321/Experiment1';
 
 % Default folder settings
-imagesFolder = fullfile(experimentFolder, 'Raw');
-saveFolder = fullfile(experimentFolder, 'Processed', 'Mcor');
+imagesFolder = fullfile(experimentFolder, 'raw');
+saveFolder = fullfile(experimentFolder, 'processed', 'mcor');
 appendToImages = '_mcor';
 
 %% Motion Correction
