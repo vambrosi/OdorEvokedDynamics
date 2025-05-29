@@ -38,43 +38,55 @@ end
 % Open first frame of the first file to get dimensions
 firstFrame = read_file(fullfile(files(1).folder, files(1).name), 1, 1);
 
-% Set parameters for the motion correction algorithm
-parameters = NoRMCorreSetParms( ...
-    'd1', size(firstFrame, 1), ...
-    'd2', size(firstFrame, 2), ...
-    'grid_size', [32,32], ...
-    'mot_uf', 4, ...
-    'bin_width', 200, ...
-    'max_shift', 15, ...
-    'max_dev', 3, ...
-    'us_fac', 50, ...
-    'init_batch', 200, ...
-    'output_type', 'tiff' ...
-);
-
-% Run motion correction of file using template of the last file
-% See github.com/flatironinstitute/NoRMCorre/issues/12 for details
-
 % File path where current state will be saved 
 [~, filename1, ~] = fileparts(files(1).name);
 [~, filename2, ~] = fileparts(files(end).name);
 stateFilename = [filename1 '_' filename2(end-4:end)];
 statePath = fullfile(saveFolder, [stateFilename '.mat']);
 
+if isfile(statePath)
+    % Load previous state file to continue processing
+    load(statePath, 'filename', 'template', 'parameters');
+    startIndex = find(string({files.name}) == filename) + 1;
+
+else
+    % If there is no state file use default values
+    startIndex = 1;
+    template = [];
+
+    parameters = NoRMCorreSetParms( ...
+        'd1', size(firstFrame, 1), ...
+        'd2', size(firstFrame, 2), ...
+        'grid_size', [32,32], ...
+        'mot_uf', 4, ...
+        'bin_width', 200, ...
+        'max_shift', 15, ...
+        'max_dev', 3, ...
+        'us_fac', 50, ...
+        'init_batch', 200, ...
+        'output_type', 'tiff' ...
+    );
+end
+
 % Start parallel processing
 gcp;
 
-template = [];
-for i = 1:size(files, 1)
+% Run motion correction of file using template of the last file
+% See github.com/flatironinstitute/NoRMCorre/issues/12 for details
+
+for fileIndex = startIndex:size(files, 1)
+    filename = files(fileIndex).name;
+
     fprintf('=======================================================\n');
-    fprintf('Processing file %s\n', files(i).name);
+    fprintf('Processing file %s\n', filename);
     
     % Get and split path to original file
-    filePath = fullfile(files(i).folder, files(i).name);
-    [~, filename, extension] = fileparts(filePath);
+    filePath = fullfile(files(fileIndex).folder, filename);
+    [~, fileroot, extension] = fileparts(filePath);
 
     % Set destination path to motion corrected file
-    mcorPath = fullfile(saveFolder, [filename appendToImages extension]);
+    mcorFilename = [fileroot appendToImages extension];
+    mcorPath = fullfile(saveFolder, mcorFilename);
     parameters.tiff_filename = mcorPath;
     
     % Run motion correction algorithm
