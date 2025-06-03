@@ -1,21 +1,30 @@
-function motionCorrection(experimentFolder, appendToImages)
+function motionCorrection(experimentFolder, options)
 % MOTIONCORRECTION - Applies motion correction to '.tif' files in the
 % folder experimentFolder/raw. Saves motion corrected images and metadata
 % to experimentFolder/processed/mcor (creating this folder if needed).
 %
 % Syntax
 %   MOTIONCORRECTION(experimentFolder)
-%   MOTIONCORRECTION(experimentFolder, appendToImages)
+%   MOTIONCORRECTION(experimentFolder, options)
 %
 % Input Arguments
 %   experimentFolder - Path to the experiment folder
 %       string scalar | character vector
 %   appendToImages - Text to add at the end of filenames
 %       '_mcor' (default) | string scalar | character vector
+%   gridSize - Patch size (in pixels, not including overlaps)
+%       32 (default) | positive integer
+%   maxShift - Max translation distance (in pixels) for each frame
+%       15 (default) | positive integer
+%   maxDeviation - Max deviation (in pixels) for each patch
+%       3 (default) | positive integer
 
 arguments
    experimentFolder {mustBeFolder}
-   appendToImages char = '_mcor'
+   options.appendToImages char = '_mcor'
+   options.gridSize {mustBeInteger, mustBePositive} = 32
+   options.maxShift {mustBeInteger, mustBePositive} = 15
+   options.maxDeviation {mustBeInteger, mustBePositive} = 3
 end
 
 % Assumes the default folder structure for a experiment
@@ -57,11 +66,11 @@ else
     parameters = NoRMCorreSetParms( ...
         'd1', size(firstFrame, 1), ...
         'd2', size(firstFrame, 2), ...
-        'grid_size', [32,32], ...
+        'grid_size', [options.gridSize, options.gridSize], ...
         'mot_uf', 4, ...
         'bin_width', 200, ...
-        'max_shift', 15, ...
-        'max_dev', 3, ...
+        'max_shift', options.maxShift, ...
+        'max_dev', options.maxDeviation, ...
         'us_fac', 50, ...
         'init_batch', 200, ...
         'output_type', 'tiff' ...
@@ -85,7 +94,7 @@ for fileIndex = startIndex:size(files, 1)
     [~, fileroot, extension] = fileparts(filePath);
 
     % Set destination path to motion corrected file
-    mcorFilename = [fileroot appendToImages extension];
+    mcorFilename = [fileroot options.appendToImages extension];
     mcorPath = fullfile(saveFolder, mcorFilename);
     parameters.tiff_filename = mcorPath;
     
