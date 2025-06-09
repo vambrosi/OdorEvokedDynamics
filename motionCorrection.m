@@ -18,7 +18,7 @@ function motionCorrection(experimentFolder, options)
 %       15 (default) | positive integer
 %   maxDeviation - Max deviation (in pixels) for each patch
 %       3 (default) | positive integer
-%   saveShiftRange - Saves array and plot of max/min shift for each frame
+%   saveShiftRangePlot - Saves plot of max/min shift per frame
 %       true (default) | logical
 
 arguments
@@ -27,7 +27,7 @@ arguments
    options.gridSize {mustBeInteger, mustBePositive} = 32
    options.maxShift {mustBeInteger, mustBePositive} = 15
    options.maxDeviation {mustBeInteger, mustBePositive} = 3
-   options.saveShiftRange logical = true
+   options.saveShiftRangePlot logical = true
 end
 
 % Assumes the default folder structure for a experiment
@@ -58,7 +58,7 @@ statePath = fullfile(saveFolder, [stateFilename '.mat']);
 
 if isfile(statePath)
     % Load previous state file to continue processing
-    load(statePath, 'filename', 'template', 'parameters');
+    load(statePath, "shiftRanges", "filename", "template", "parameters");
     startIndex = find(string({files.name}) == filename) + 1;
 
 else
@@ -107,37 +107,51 @@ for fileIndex = startIndex:size(files, 1)
         normcorre_batch(filePath, parameters, template);
     toc
 
+    % Compute the max/min absolute x or y shifts
+    shiftRange = getShiftRange(shifts);
+    shiftRanges(fileIndex).filename = [fileroot extension];
+    shiftRanges(fileIndex).shiftRange = shiftRange;
+
     % Save current state in case loop is interrupted
     % - filename tells where the loop stopped
     % - template is needed to keep motion correction consistent
     % - parameters stores the initial settings
-    % - shiftRange stores min/max shift for each frame
-    if options.saveShiftRange
-        nFrames = size(shifts, 1);
-        shiftRange = zeros(nFrames, 2);
-    
-        for i = 1:nFrames
-            absShift = abs(shifts(i).shifts_up);
-            shiftRange(i, 1) = min(absShift, [], "all");
-            shiftRange(i, 2) = max(absShift, [], "all");
-        end
+    % - shiftRanges stores min/max shift for each frame for all files
+    save(statePath, "shiftRanges", "filename", "template", "parameters");
 
-        save(statePath, "shiftRange", "filename", ...
-            "template", "parameters");
-
-        fig = figure(Visible="off");
-        
-        xFrames = 1:nFrames;
-        plot(xFrames, shiftRange);
-        xlim([1 nFrames]);
-
-        imagePath = fullfile(saveFolder, [fileroot '_shiftRange.png']);
-        saveas(fig, imagePath);
-        
-        close(fig);
-    else
-        save(statePath, "filename", "template", "parameters");
+    % Saves plot of the shift range
+    if options.saveShiftRangePlot
+        maxTotalShift = max(parameters.max_shift + parameters.max_dev);
+        plotShiftRange(shiftRange, maxTotalShift, saveFolder, fileroot);
     end
 end
 
+end
+
+function shiftRange = getShiftRange(shifts)
+    nFrames = size(shifts, 1);
+    shiftRange = zeros(nFrames, 2);
+    
+    for i = 1:nFrames
+        absShift = abs(shifts(i).shifts_up);
+        shiftRange(i, 1) = min(absShift, [], "all");
+        shiftRange(i, 2) = max(absShift, [], "all");
+    end
+end
+
+function plotShiftRange(shiftRange, maxTotalShift, saveFolder, fileroot)
+    fig = figure(Visible="off");
+    
+    nFrames = size(shiftRange, 1);
+    xFrames = 1:nFrames;
+    plot(xFrames, shiftRange);
+    
+    yline(maxTotalShift);
+    xlim([1 nFrames]);
+    ylim([0 maxTotalShift + 1]);
+
+    imagePath = fullfile(saveFolder, [fileroot '_shiftRange.png']);
+    saveas(fig, imagePath);
+    
+    close(fig);
 end
