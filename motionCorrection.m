@@ -18,6 +18,8 @@ function motionCorrection(experimentFolder, options)
 %       15 (default) | positive integer
 %   maxDeviation - Max deviation (in pixels) for each patch
 %       3 (default) | positive integer
+%   saveShiftRange - Saves array and plot of max/min shift for each frame
+%       true (default) | logical
 
 arguments
    experimentFolder {mustBeFolder}
@@ -25,6 +27,7 @@ arguments
    options.gridSize {mustBeInteger, mustBePositive} = 32
    options.maxShift {mustBeInteger, mustBePositive} = 15
    options.maxDeviation {mustBeInteger, mustBePositive} = 3
+   options.saveShiftRange logical = true
 end
 
 % Assumes the default folder structure for a experiment
@@ -100,7 +103,7 @@ for fileIndex = startIndex:size(files, 1)
     
     % Run motion correction algorithm
     tic;
-    [~, ~, template, parameters] = ...
+    [~, shifts, template, parameters] = ...
         normcorre_batch(filePath, parameters, template);
     toc
 
@@ -108,7 +111,33 @@ for fileIndex = startIndex:size(files, 1)
     % - filename tells where the loop stopped
     % - template is needed to keep motion correction consistent
     % - parameters stores the initial settings
-    save(statePath, 'filename', 'template', 'parameters');
+    % - shiftRange stores min/max shift for each frame
+    if options.saveShiftRange
+        nFrames = size(shifts, 1);
+        shiftRange = zeros(nFrames, 2);
+    
+        for i = 1:nFrames
+            absShift = abs(shifts(i).shifts_up);
+            shiftRange(i, 1) = min(absShift, [], "all");
+            shiftRange(i, 2) = max(absShift, [], "all");
+        end
+
+        save(statePath, "shiftRange", "filename", ...
+            "template", "parameters");
+
+        fig = figure(Visible="off");
+        
+        xFrames = 1:nFrames;
+        plot(xFrames, shiftRange);
+        xlim([1 nFrames]);
+
+        imagePath = fullfile(saveFolder, [fileroot '_shiftRange.png']);
+        saveas(fig, imagePath);
+        
+        close(fig);
+    else
+        save(statePath, "filename", "template", "parameters");
+    end
 end
 
 end
