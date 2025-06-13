@@ -10,8 +10,6 @@ function motionCorrection(experimentFolder, options)
 % Input Arguments
 %   experimentFolder - Path to the experiment folder
 %       string scalar | character vector
-%   appendToImages - Text to add at the end of filenames
-%       '_mcor' (default) | string scalar | character vector
 %   gridSize - Patch size (in pixels, not including overlaps)
 %       32 (default) | positive integer
 %   maxShift - Max translation distance (in pixels) for each frame
@@ -23,7 +21,6 @@ function motionCorrection(experimentFolder, options)
 
 arguments
    experimentFolder {mustBeFolder}
-   options.appendToImages char = '_mcor'
    options.gridSize {mustBeInteger, mustBePositive} = 32
    options.maxShift {mustBeInteger, mustBePositive} = 15
    options.maxDeviation {mustBeInteger, mustBePositive} = 3
@@ -54,7 +51,7 @@ firstFrame = read_file(fullfile(files(1).folder, files(1).name), 1, 1);
 [~, filename1, ~] = fileparts(files(1).name);
 [~, filename2, ~] = fileparts(files(end).name);
 stateFilename = [filename1 '_' filename2(end-4:end)];
-statePath = fullfile(saveFolder, [stateFilename '.mat']);
+statePath = fullfile(saveFolder, [stateFilename '_mcor.mat']);
 
 if isfile(statePath)
     % Load previous state file to continue processing
@@ -80,6 +77,9 @@ else
     );
 end
 
+% String to be append to motion corrected files
+appendToImages = '_mcor';
+
 % Start parallel processing
 gcp;
 
@@ -97,7 +97,7 @@ for fileIndex = startIndex:size(files, 1)
     [~, fileroot, extension] = fileparts(filePath);
 
     % Set destination path to motion corrected file
-    mcorFilename = [fileroot options.appendToImages extension];
+    mcorFilename = [fileroot appendToImages extension];
     mcorPath = fullfile(saveFolder, mcorFilename);
     parameters.tiff_filename = mcorPath;
     
@@ -111,7 +111,7 @@ for fileIndex = startIndex:size(files, 1)
     shiftRange = getShiftRange(shifts);
 
     % Organizes shift data for later analysis
-    mcorData(fileIndex).filename = [fileroot extension];
+    mcorData(fileIndex).filename = filename;
     mcorData(fileIndex).shifts = cat(5, shifts.shifts);
     mcorData(fileIndex).shiftsUp = cat(5, shifts.shifts_up);
     mcorData(fileIndex).shiftRange = shiftRange;
