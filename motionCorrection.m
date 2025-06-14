@@ -24,6 +24,10 @@ arguments
    options.maxDeviation {mustBeInteger, mustBePositive} = 3
 end
 
+import NoRMCorre.read_file
+import NoRMCorre.normcorre_batch
+import NoRMCorre.NoRMCorreSetParms
+
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
 saveFolder = fullfile(experimentFolder, 'processed', 'mcor');

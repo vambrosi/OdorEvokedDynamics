@@ -15,6 +15,10 @@ arguments
     experimentFolder {mustBeFolder}
 end
 
+import NoRMCorre.read_file
+import NoRMCorre.motion_metrics
+import NoRMCorre.NoRMCorreSetParms
+
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
 mcorFolder = fullfile(experimentFolder, 'processed', 'mcor');
