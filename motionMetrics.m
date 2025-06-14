@@ -52,6 +52,14 @@ metricPath = fullfile(metricsFolder, [dataFilename '_metrics.mat']);
 load(dataPath, 'mcorData', 'parameters');
 maxTotalShift = max(parameters.max_shift + parameters.max_dev);
 
+% Preallocate the struct array mcorMetrics
+mcorMetrics(size(files, 1)).filename = [];
+mcorMetrics(size(files, 1)).rawCorrelation = [];
+mcorMetrics(size(files, 1)).rawCrispness = [];
+mcorMetrics(size(files, 1)).mcorCorrelation = [];
+mcorMetrics(size(files, 1)).mcorCrispness = [];
+mcorMetrics(size(files, 1)).shiftRange = [];
+
 for fileIndex = 1:size(files, 1)
     filename = files(fileIndex).name;
     fprintf('Computing metrics for file %s\n', filename);
@@ -102,8 +110,7 @@ for fileIndex = 1:size(files, 1)
         shiftRange = getRanges(mcorData(fileIndex).shiftsUp);
         mcorMetrics(fileIndex).shiftRange = shiftRange;
         
-        saveShiftPlot(mcorMetrics(fileIndex).shiftRange, ...
-            maxTotalShift, metricsFolder, fileroot)
+        saveShiftPlot(shiftRange, maxTotalShift, metricsFolder, fileroot)
     end
 end
 
