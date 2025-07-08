@@ -121,4 +121,5 @@ for fileIndex = startIndex:size(files, 1)
     save(statePath, "mcorData", "filename", "template", "parameters");
 end
 
+plotComparisons(experimentFolder)
 end
