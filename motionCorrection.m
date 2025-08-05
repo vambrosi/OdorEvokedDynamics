@@ -16,20 +16,33 @@ function motionCorrection(experimentFolder, options)
 %       15 (default) | positive integer
 %   maxDeviation - Max deviation (in pixels) for each patch
 %       3 (default) | positive integer
+%   binWidth - Number of frames to process in parallel
+%       200 (default) | must be integer between 1 and (number of frames)/2
+%   templateSize - Number of frames used to make the templates
+%       binWidth (default) | must be integer between 1 and number of frames
+
 
 arguments
    experimentFolder {mustBeFolder}
    options.gridSize {mustBeInteger, mustBePositive} = 32
    options.maxShift {mustBeInteger, mustBePositive} = 15
    options.maxDeviation {mustBeInteger, mustBePositive} = 3
+   options.binWidth {mustBeInteger, mustBePositive} = 200
+   options.templateSize {mustBeInteger, mustBePositive}
 end
 
 import NoRMCorre.read_file
 import NoRMCorre.normcorre_batch
 import NoRMCorre.NoRMCorreSetParms
 
+% If templateSize is not provided, make it equal to binWidth
+if ~isfield(options, "templateSize")
+    options.templateSize = options.binWidth;
+end
+
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
+% imagesFolder = fullfile(experimentFolder);
 saveFolder = fullfile(experimentFolder, 'processed', 'mcor');
 
 % Store file paths
@@ -69,11 +82,11 @@ else
         'd2', size(firstFrame, 2), ...
         'grid_size', [options.gridSize, options.gridSize], ...
         'mot_uf', 4, ...
-        'bin_width', 200, ...
+        'bin_width', options.binWidth, ...
         'max_shift', options.maxShift, ...
         'max_dev', options.maxDeviation, ...
         'us_fac', 50, ...
-        'init_batch', 200, ...
+        'init_batch', options.templateSize, ...
         'output_type', 'tiff' ...
     );
 end
