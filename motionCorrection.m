@@ -26,7 +26,16 @@ function motionCorrection(experimentFolder, options)
 % TODO
 % 1) add boolean variable "isRigid" --> if true, get number of frames and
 %    adjust grid parameters accordingly
+% 2) can we split gridsize into x and y variables?
 
+% GURL things
+% 1) tried setting the default maxShift to 10% of largest dimension size
+% 2) got # of frames from 1st img
+% 3) tried setting the default gridSize to 1/4 of smallest dimension
+% 4) tried setting the max default binWidth to 1/3 of number of frames
+% 5) tried setting maxDeviation to 1/5 of maxShift
+
+% Set defaults argument values but note that code will change them!!
 arguments
    experimentFolder {mustBeFolder}
    options.gridSize {mustBeInteger, mustBePositive} = 32
@@ -39,11 +48,6 @@ end
 import NoRMCorre.read_file
 import NoRMCorre.normcorre_batch
 import NoRMCorre.NoRMCorreSetParms
-
-% If templateSize is not provided, make it equal to binWidth
-if ~isfield(options, "templateSize")
-    options.templateSize = options.binWidth;
-end
 
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
@@ -63,8 +67,32 @@ if ~isfolder(saveFolder)
     mkdir(saveFolder)
 end
 
-% Open first frame of the first file to get dimensions
+% Open first frame of the first file to get dimensions (rows, columns)
 firstFrame = read_file(fullfile(files(1).folder, files(1).name), 1, 1);
+
+% Set maxShift to 10% of largest dimension
+options.maxShift = round(0.1 * max(size(firstFrame)));
+
+% Set gridSize to 1/4 of smallest dimension
+options.gridSize = round(0.25 * min(size(firstFrame)));
+
+% Get number of frames from first file
+% Assumption ALERT: all figures in folder  have the same number of frames
+imgInfo = imfinfo(fullfile(files(1).folder, files(1).name));
+numberOfFrames = length(imgInfo);
+
+% Set binWidth to <= 1/3 of number of frames
+if options.binWidth >= numberOfFrames
+    options.binWidth = round(numberOfFrames/3);
+end
+
+% If templateSize is not provided, make it equal to binWidth
+if ~isfield(options, "templateSize")
+    options.templateSize = options.binWidth;
+end
+
+% Set maxDeviation to 1/5 of maxShift
+options.maxDeviation = round(0.2 * options.maxShift);
 
 % File path where current state will be saved 
 [~, filename1, ~] = fileparts(files(1).name);
