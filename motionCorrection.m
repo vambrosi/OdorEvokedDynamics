@@ -21,6 +21,11 @@ function motionCorrection(experimentFolder, options)
 %   templateSize - Number of frames used to make the templates
 %       binWidth (default) | must be integer between 1 and number of frames
 
+% ex: motionCorrection('/Users/priscilla/Documents/Local - Moss Lab/20250721/e2', templateSize=21, binWidth=20)
+
+% TODO
+% 1) add boolean variable "isRigid" --> if true, get number of frames and
+%    adjust grid parameters accordingly
 
 arguments
    experimentFolder {mustBeFolder}

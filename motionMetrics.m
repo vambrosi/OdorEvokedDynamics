@@ -9,7 +9,10 @@ function motionMetrics(experimentFolder)
 %   experimentFolder - Path to the experiment folder
 %       string scalar | character vector
 
-% TODO fix motion_metrics border
+% TODO 
+% 1) fix motion_metrics border (y-axis)
+% 2) concatenate all plots
+% 3) only plot average images of middle and last files.
 
 arguments
     experimentFolder {mustBeFolder}
@@ -21,6 +24,7 @@ import NoRMCorre.NoRMCorreSetParms
 
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
+% imagesFolder = fullfile(experimentFolder);
 mcorFolder = fullfile(experimentFolder, 'processed', 'mcor');
 metricsFolder = fullfile(mcorFolder, 'metrics');
 
