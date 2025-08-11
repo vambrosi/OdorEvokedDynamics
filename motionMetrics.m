@@ -24,14 +24,7 @@ import NoRMCorre.NoRMCorreSetParms
 
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
-% imagesFolder = fullfile(experimentFolder);
 mcorFolder = fullfile(experimentFolder, 'processed', 'mcor');
-metricsFolder = fullfile(mcorFolder, 'metrics');
-
-% Create metrics folder if it doesn't exist
-if ~isfolder(metricsFolder)
-    mkdir(metricsFolder)
-end
 
 % Store file paths
 files = dir(fullfile(imagesFolder, "*.tif"));
@@ -50,7 +43,9 @@ appendToImages = '_mcor';
 dataFilename = [filename1 '_' filename2(end-4:end)];
 
 dataPath = fullfile(mcorFolder, [dataFilename '_mcor.mat']);
-metricPath = fullfile(metricsFolder, [dataFilename '_metrics.mat']);
+metricPath = fullfile(mcorFolder, [dataFilename '_metrics.mat']);
+correlationPath = fullfile(mcorFolder, [dataFilename '__correlation.png']);
+shiftPath = fullfile(mcorFolder, [dataFilename '__shiftRange.png']);
 
 % Load motion correction data to compute shift ranges
 load(dataPath, 'mcorData', 'parameters');
@@ -88,38 +83,36 @@ for fileIndex = 1:size(files, 1)
         quantiles = [lowQuantile, highQuantile];
         
         % Compute and saves metrics of the raw file
-        [rawCorrelation, rawMeanImage, rawCrispness] = ...
+        [rawCorrelation, ~, rawCrispness] = ...
             motion_metrics(rawStack, 10);
 
         mcorMetrics(fileIndex).rawCorrelation = rawCorrelation;
         mcorMetrics(fileIndex).rawCrispness = rawCrispness;
-        saveMeanImage(rawMeanImage, quantiles, metricsFolder, ...
-            fileroot, '_AVG_raw');
 
         % Compute and saves metrics of the motion corrected file
-        [mcorCorrelation, mcorMeanImage, mcorCrispness] = ...
+        [mcorCorrelation, ~, mcorCrispness] = ...
             motion_metrics(mcorStack, 10);
 
         mcorMetrics(fileIndex).mcorCorrelation = mcorCorrelation;
         mcorMetrics(fileIndex).mcorCrispness = mcorCrispness;
-        saveMeanImage(mcorMeanImage, quantiles, metricsFolder, ...
-            fileroot, '_AVG_mcor');
-
-        % Saves the plot comparing the correlations of raw
-        % and motion corrected files
-        saveCorrelationPlot(rawCorrelation, mcorCorrelation, ...
-            metricsFolder, fileroot);
 
         % Computes the shiftRange and saves its plot
         shiftRange = getRanges(mcorData(fileIndex).shiftsUp);
         mcorMetrics(fileIndex).shiftRange = shiftRange;
-        
-        saveShiftPlot(shiftRange, maxTotalShift, metricsFolder, fileroot)
     end
 end
 
 % Saves all metrics
 save(metricPath, 'mcorMetrics')
+
+% Concatenate metrics for all files
+rawCorrelation = vertcat(mcorMetrics.rawCorrelation);
+mcorCorrelation = vertcat(mcorMetrics.mcorCorrelation);
+shiftRange = horzcat(mcorMetrics.shiftRange);
+
+% Save plots
+saveShiftPlot(shiftRange, maxTotalShift, shiftPath);
+saveCorrelationPlot(rawCorrelation, mcorCorrelation, correlationPath);
 end
 
 function range = getRanges(arrays)
@@ -131,7 +124,7 @@ function range = getRanges(arrays)
     range = [min(absCoordinates); max(absCoordinates)];
 end
 
-function saveShiftPlot(shiftRange, maxTotalShift, saveFolder, fileroot)
+function saveShiftPlot(shiftRange, maxTotalShift, imagePath)
 % SAVESHIFTPLOT saves the default plot of the getShiftRange results
     fig = figure(Visible="off");
     
@@ -148,29 +141,12 @@ function saveShiftPlot(shiftRange, maxTotalShift, saveFolder, fileroot)
     title('Max and Min Coordinate Shift', ...
         'fontsize',14,'fontweight','bold');
 
-    imagePath = fullfile(saveFolder, [fileroot '_shiftRange.png']);
     saveas(fig, imagePath);
     
     close(fig);
 end
 
-function saveMeanImage(mean, quantiles, saveFolder, fileroot, appendToFile)
-% SAVEMEANIMAGE saves the mean z-projections to the mcor folder.
-    fig = figure(Visible="off");
-    
-    imagesc(mean, quantiles);
-    colormap gray;
-    axis equal;
-    axis tight;
-    axis off;
-
-    imagePath = fullfile(saveFolder, [fileroot appendToFile '.png']);
-    saveas(fig, imagePath);
-    
-    close(fig);
-end
-
-function saveCorrelationPlot(raw, mcor, saveFolder, fileroot)
+function saveCorrelationPlot(raw, mcor, imagePath)
 % SAVECORRELATIONPLOT saves the plot of the correlation of a frame with the
 % mean z-projection.
     nFrames = length(raw);
@@ -186,7 +162,6 @@ function saveCorrelationPlot(raw, mcor, saveFolder, fileroot)
     title('Correlation with the Mean Image', ...
         'fontsize',14,'fontweight','bold');
 
-    imagePath = fullfile(saveFolder, [fileroot '_correlation.png']);
     saveas(fig, imagePath);
     
     close(fig);
