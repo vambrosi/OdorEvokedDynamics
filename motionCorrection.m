@@ -1,11 +1,10 @@
-function motionCorrection(experimentFolder, options)
+function motionCorrection(experimentFolder)
 % MOTIONCORRECTION - Applies motion correction to '.tif' files in the
 % folder experimentFolder/raw. Saves motion corrected images and metadata
 % to experimentFolder/processed/mcor (creating this folder if needed).
 %
 % Syntax
 %   MOTIONCORRECTION(experimentFolder)
-%   MOTIONCORRECTION(experimentFolder, options)
 %
 % Input Arguments
 %   experimentFolder - Path to the experiment folder
@@ -27,22 +26,18 @@ function motionCorrection(experimentFolder, options)
 % 1) add boolean variable "isRigid" --> if true, get number of frames and
 %    adjust grid parameters accordingly
 % 2) can we split gridsize into x and y variables?
-
-% GURL things
-% 1) tried setting the default maxShift to 10% of largest dimension size
-% 2) got # of frames from 1st img
-% 3) tried setting the default gridSize to 1/4 of smallest dimension
-% 4) tried setting the max default binWidth to 1/3 of number of frames
-% 5) tried setting maxDeviation to 1/5 of maxShift
+% 3) annotate rationale behind us_fac and mot_uf choices
+% 4) explain parameters where they are defined
 
 % Set defaults argument values but note that code will change them!!
 arguments
    experimentFolder {mustBeFolder}
-   options.gridSize {mustBeInteger, mustBePositive} = 32
-   options.maxShift {mustBeInteger, mustBePositive} = 15
-   options.maxDeviation {mustBeInteger, mustBePositive} = 3
-   options.binWidth {mustBeInteger, mustBePositive} = 200
-   options.templateSize {mustBeInteger, mustBePositive}
+   % options.gridSizeX {mustBeInteger, mustBePositive} = 32
+   % options.gridSizeY {mustBeInteger, mustBePositive} = 32
+   % options.maxShift {mustBeInteger, mustBePositive} = 15
+   % options.maxDeviation {mustBeInteger, mustBePositive} = 3
+   % options.binWidth {mustBeInteger, mustBePositive} = 200
+   % options.templateSize {mustBeInteger, mustBePositive}
 end
 
 import NoRMCorre.read_file
@@ -51,7 +46,6 @@ import NoRMCorre.NoRMCorreSetParms
 
 % Assumes the default folder structure for a experiment
 imagesFolder = fullfile(experimentFolder, 'raw');
-% imagesFolder = fullfile(experimentFolder);
 saveFolder = fullfile(experimentFolder, 'processed', 'mcor');
 
 % Store file paths
@@ -67,32 +61,33 @@ if ~isfolder(saveFolder)
     mkdir(saveFolder)
 end
 
-% Open first frame of the first file to get dimensions (rows, columns)
+% Open first frame of the first file to get dimensions 
+% Use size (rows, columns) to set mcor parameters
 firstFrame = read_file(fullfile(files(1).folder, files(1).name), 1, 1);
 
-% Set maxShift to 10% of largest dimension
-options.maxShift = round(0.1 * max(size(firstFrame)));
-
-% Set gridSize to 1/4 of smallest dimension
-options.gridSize = round(0.25 * min(size(firstFrame)));
+    % Set maxShift to 5% of largest dimension
+    options.maxShift = round(0.05 * max(size(firstFrame)));
+    
+    % Set gridSize to 10% of its dimension
+    options.gridSizeY = round(0.1 * size(firstFrame,1));
+    options.gridSizeX = round(0.1 * size(firstFrame,2));
+    
+    % Set maxDeviation to 1/5 of maxShift
+    options.maxDeviation = round(0.2 * options.maxShift);
 
 % Get number of frames from first file
+% Use number of frames to set mcor parameters
 % Assumption ALERT: all figures in folder  have the same number of frames
 imgInfo = imfinfo(fullfile(files(1).folder, files(1).name));
 numberOfFrames = length(imgInfo);
 
-% Set binWidth to <= 1/3 of number of frames
-if options.binWidth >= numberOfFrames
-    options.binWidth = round(numberOfFrames/3);
-end
+    % Set binWidth to <= 1/5 of number of frames
+    options.binWidth = round(numberOfFrames/5);
 
 % If templateSize is not provided, make it equal to binWidth
 if ~isfield(options, "templateSize")
     options.templateSize = options.binWidth;
 end
-
-% Set maxDeviation to 1/5 of maxShift
-options.maxDeviation = round(0.2 * options.maxShift);
 
 % File path where current state will be saved 
 [~, filename1, ~] = fileparts(files(1).name);
@@ -113,14 +108,15 @@ else
     parameters = NoRMCorreSetParms( ...
         'd1', size(firstFrame, 1), ...
         'd2', size(firstFrame, 2), ...
-        'grid_size', [options.gridSize, options.gridSize], ...
+        'grid_size', [options.gridSizeX, options.gridSizeY], ...
         'mot_uf', 4, ...
         'bin_width', options.binWidth, ...
         'max_shift', options.maxShift, ...
         'max_dev', options.maxDeviation, ...
         'us_fac', 50, ...
         'init_batch', options.templateSize, ...
-        'output_type', 'tiff' ...
+        'output_type', 'tiff', ...
+        'correct_bidir', false ...  % if left true, adds artificial horizontal shift across files
     );
 end
 

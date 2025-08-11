@@ -10,9 +10,8 @@ function motionMetrics(experimentFolder)
 %       string scalar | character vector
 
 % TODO 
-% 1) fix motion_metrics border (y-axis)
-% 2) concatenate all plots
-% 3) only plot average images of middle and last files.
+% - fix motion_metrics border (y-axis)
+% - plot crispness
 
 arguments
     experimentFolder {mustBeFolder}
