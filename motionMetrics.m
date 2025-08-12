@@ -102,7 +102,7 @@ for fileIndex = 1:size(files, 1)
 end
 
 % Saves all metrics
-save(metricPath, 'mcorMetrics')
+save(metricPath, 'mcorMetrics', '-v7.3')
 
 % Concatenate metrics for all files
 rawCorrelation = vertcat(mcorMetrics.rawCorrelation);

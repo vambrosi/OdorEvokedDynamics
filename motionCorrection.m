@@ -160,7 +160,8 @@ for fileIndex = startIndex:size(files, 1)
     % - template is needed to keep motion correction consistent
     % - parameters stores the initial settings
     % - mcorData stores motion correction data for later analysis
-    save(statePath, "mcorData", "filename", "template", "parameters");
+    save(statePath, "mcorData", "filename", ...
+        "template", "parameters", "-v7.3");
 end
 
 plotComparisons(experimentFolder)
