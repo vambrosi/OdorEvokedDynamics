@@ -29,6 +29,11 @@ function motionCorrection(experimentFolder)
 % 3) annotate rationale behind us_fac and mot_uf choices
 % 4) explain parameters where they are defined
 
+% DEPENDS ON
+% Parallel Computing Toolbox
+% Statistics and Machine Learning Toolbox: nanmean
+% Imaging Processing Toolbox: mat2gray
+
 % Set defaults argument values but note that code will change them!!
 arguments
    experimentFolder {mustBeFolder}
