@@ -28,6 +28,9 @@ if isempty(files), error("Image folder is empty."); end
 [~, ind] = sort({files.name});
 files = files(ind);
 
+% Exclude Mac hidden files
+files = files(~startsWith({files.name},'.'));
+
 % Get 3 files to plot the comparisons
 startFile = files(1);
 midFile = files(ceil(length(files) / 2));

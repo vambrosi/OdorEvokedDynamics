@@ -29,11 +29,6 @@ function motionCorrection(experimentFolder)
 % 3) annotate rationale behind us_fac and mot_uf choices
 % 4) explain parameters where they are defined
 
-% DEPENDS ON
-% Parallel Computing Toolbox
-% Statistics and Machine Learning Toolbox: nanmean
-% Imaging Processing Toolbox: mat2gray
-
 % Set defaults argument values but note that code will change them!!
 arguments
    experimentFolder {mustBeFolder}
@@ -70,14 +65,14 @@ end
 % Use size (rows, columns) to set mcor parameters
 firstFrame = read_file(fullfile(files(1).folder, files(1).name), 1, 1);
 
-    % Set maxShift to 5% of largest dimension --> changed to 10%
+    % Set maxShift to 5% of largest dimension
     options.maxShift = round(0.05 * max(size(firstFrame)));
     
     % Set gridSize to 10% of its dimension
     options.gridSizeY = round(0.1 * size(firstFrame,1));
     options.gridSizeX = round(0.1 * size(firstFrame,2));
     
-    % Set maxDeviation to 1/5 of maxShift --> changed to 1/2
+    % Set maxDeviation to 1/5 of maxShift
     options.maxDeviation = round(0.2 * options.maxShift);
 
 % Get number of frames from first file
@@ -165,8 +160,7 @@ for fileIndex = startIndex:size(files, 1)
     % - template is needed to keep motion correction consistent
     % - parameters stores the initial settings
     % - mcorData stores motion correction data for later analysis
-    save(statePath, "mcorData", "filename", ...
-        "template", "parameters", "-v7.3");
+    save(statePath, "mcorData", "filename", "template", "parameters");
 end
 
 plotComparisons(experimentFolder)
