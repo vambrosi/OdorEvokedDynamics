@@ -6,3 +6,6 @@ from_others/
 
 # Ignore data files
 *.mat
+
+# Ignore autosaves
+*.asv
